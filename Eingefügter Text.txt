@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>DriverHub — MVP Prototyp</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg0: #0a0a0b;
+    --bg1: #111113;
+    --bg2: #18181c;
+    --bg3: #1f1f25;
+    --bg4: #26262e;
+    --border: rgba(255,255,255,0.07);
+    --border-md: rgba(255,255,255,0.12);
+    --text-primary: #f0f0f2;
+    --text-secondary: #8a8a96;
+    --text-dim: #4a4a56;
+    --uber-green: #00c853;
+    --uber-green-dim: rgba(0,200,83,0.12);
+    --bolt-yellow: #f5c518;
+    --bolt-yellow-dim: rgba(245,197,24,0.12);
+    --danger: #ff4757;
+    --danger-dim: rgba(255,71,87,0.12);
+    --accent: #6c63ff;
+    --accent-dim: rgba(108,99,255,0.15);
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
+  }
+
+  body {
+    background: #050506;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    font-family: 'DM Sans', sans-serif;
+    padding: 24px 16px 48px;
+  }
+
+  .phone-frame {
+    width: 390px;
+    min-height: 844px;
+    background: var(--bg0);
+    border-radius: 50px;
+    border: 1.5px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 0 6px #0d0d0f, 0 40px 100px rgba(0,0,0,0.8);
+  }
+
+  .notch {
+    width: 120px;
+    height: 32px;
+    background: #0a0a0b;
+    border-radius: 0 0 20px 20px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 28px 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .status-bar-icons { display: flex; gap: 6px; align-items: center; }
+
+  .app-content {
+    padding: 16px 20px 32px;
+    overflow-y: auto;
+    max-height: calc(844px - 80px);
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    margin-top: 1px;
+  }
+
+  .settings-btn {
+    width: 38px;
+    height: 38px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 18px;
+    transition: all 0.2s;
+  }
+  .settings-btn:active { transform: scale(0.94); background: var(--bg4); }
+
+  /* SHIELD STATUS */
+  .shield-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shield-card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, var(--accent-dim) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .shield-icon {
+    width: 52px;
+    height: 52px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+
+  .shield-info { flex: 1; }
+
+  .shield-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .shield-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .pulse-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--uber-green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(0,200,83,0.4); }
+    50% { opacity: 0.8; transform: scale(1.15); box-shadow: 0 0 0 6px rgba(0,200,83,0); }
+  }
+
+  /* PLATFORM CARDS */
+  .platforms-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .platform-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .platform-card:active { transform: scale(0.97); }
+
+  .platform-card.online-uber {
+    border-color: rgba(0,200,83,0.25);
+    background: linear-gradient(135deg, var(--bg2) 60%, var(--uber-green-dim));
+  }
+
+  .platform-card.online-bolt {
+    border-color: rgba(245,197,24,0.25);
+    background: linear-gradient(135deg, var(--bg2) 60%, var(--bolt-yellow-dim));
+  }
+
+  .platform-card.offline-state {
+    opacity: 0.55;
+    border-color: var(--border);
+    background: var(--bg2);
+  }
+
+  .platform-logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-bottom: 12px;
+  }
+
+  .platform-logo.uber { color: #ffffff; }
+  .platform-logo.bolt { color: var(--bolt-yellow); }
+
+  .platform-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-bottom: 10px;
+  }
+
+  .badge-online-uber { background: var(--uber-green-dim); color: var(--uber-green); }
+  .badge-online-bolt { background: var(--bolt-yellow-dim); color: var(--bolt-yellow); }
+  .badge-offline { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .platform-stat {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .platform-stat span {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .platform-toggle {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 42px;
+    height: 24px;
+    border-radius: 12px;
+    background: var(--bg4);
+    border: 1px solid var(--border-md);
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    padding: 2px;
+  }
+
+  .platform-toggle.on-uber { background: var(--uber-green); border-color: var(--uber-green); }
+  .platform-toggle.on-bolt { background: var(--bolt-yellow); border-color: var(--bolt-yellow); }
+
+  .toggle-knob {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  .platform-toggle.on-uber .toggle-knob,
+  .platform-toggle.on-bolt .toggle-knob {
+    transform: translateX(18px);
+  }
+
+  /* QUICK ACTIONS */
+  .quick-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .action-btn {
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: -0.2px;
+  }
+
+  .action-btn:active { transform: scale(0.96); }
+
+  .btn-all-online {
+    background: var(--uber-green);
+    color: #001a0a;
+  }
+
+  .btn-all-offline {
+    background: var(--bg3);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-md);
+  }
+
+  .btn-all-offline:hover { background: var(--bg4); }
+
+  .btn-icon { font-size: 16px; }
+
+  /* ACTIVITY LOG */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+
+  .section-clear {
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .section-clear:hover { color: var(--text-secondary); }
+
+  .log-container {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .log-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn 0.4s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .log-entry:last-child { border-bottom: none; }
+
+  .log-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .log-icon.success { background: rgba(0,200,83,0.12); }
+  .log-icon.warning { background: rgba(245,197,24,0.12); }
+  .log-icon.info { background: var(--accent-dim); }
+  .log-icon.error { background: var(--danger-dim); }
+
+  .log-text {
+    flex: 1;
+  }
+
+  .log-message {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+    line-height: 1.4;
+    margin-bottom: 2px;
+  }
+
+  .log-time {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .log-platform-tag {
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
+  .tag-uber { background: rgba(255,255,255,0.08); color: #ccc; }
+  .tag-bolt { background: var(--bolt-yellow-dim); color: var(--bolt-yellow); }
+
+  /* ACTIVE TRIP CARD */
+  .trip-card {
+    background: var(--bg2);
+    border: 1px solid rgba(0,200,83,0.2);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .trip-card.visible { display: block; }
+
+  .trip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .trip-label {
+    font-size: 11px;
+    color: var(--uber-green);
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+
+  .trip-timer {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .trip-route {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .route-dots {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding-top: 4px;
+  }
+
+  .route-dot-start {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--uber-green);
+  }
+
+  .route-line {
+    width: 2px;
+    height: 18px;
+    background: var(--border-md);
+    border-radius: 1px;
+  }
+
+  .route-dot-end {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--text-secondary);
+  }
+
+  .route-labels { flex: 1; }
+
+  .route-stop {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 18px;
+  }
+
+  .route-stop:last-child { margin-bottom: 0; }
+
+  .route-stop-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg1);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 0 24px;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 6px 20px;
+    border-radius: 12px;
+    transition: all 0.2s;
+  }
+
+  .nav-item.active .nav-icon { color: var(--accent); }
+  .nav-item.active .nav-label { color: var(--accent); }
+
+  .nav-icon {
+    font-size: 22px;
+    color: var(--text-dim);
+    transition: color 0.2s;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: color 0.2s;
+  }
+
+  /* NOTIFICATION TOAST */
+  .toast {
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    right: 20px;
+    background: var(--bg3);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 100;
+    transform: translateY(-20px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+    pointer-events: none;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .toast-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--accent-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .toast-text { flex: 1; }
+  .toast-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+  .toast-sub { font-size: 11px; color: var(--text-secondary); }
+
+  /* DEMO BADGE */
+  .demo-badge {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: rgba(108,99,255,0.2);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #a8a0ff;
+    letter-spacing: 0.5px;
+  }
+
+  /* SCENARIO CONTROLS (outside phone) */
+  .demo-controls {
+    width: 390px;
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+  }
+
+  .demo-controls-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .demo-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .demo-btn {
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.6);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    line-height: 1.4;
+  }
+
+  .demo-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); }
+  .demo-btn:active { transform: scale(0.97); }
+
+  .demo-btn strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div style="display:flex; flex-direction:column; align-items:center;">
+
+<!-- PHONE FRAME -->
+<div class="phone-frame">
+  <div class="demo-badge">DEMO</div>
+  <div class="notch"></div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <span>09:41</span>
+    <div class="status-bar-icons">
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+        <rect x="0" y="3" width="3" height="9" rx="1" fill="rgba(255,255,255,0.4)"/>
+        <rect x="4.5" y="2" width="3" height="10" rx="1" fill="rgba(255,255,255,0.6)"/>
+        <rect x="9" y="0" width="3" height="12" rx="1" fill="rgba(255,255,255,0.85)"/>
+        <rect x="13.5" y="1" width="2.5" height="10" rx="0.8" fill="white"/>
+      </svg>
+      <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
+        <path d="M7 3C4.5 3 2.3 4.1 0.8 5.8L2.2 7.2C3.3 5.9 4.8 5 6.5 5L7 5.5L7 3Z" fill="rgba(255,255,255,0.4)"/>
+        <path d="M7 0C3.5 0 0.4 1.5 -1.3 3.9L0.1 5.3C1.4 3.3 4 2 7 2C10 2 12.6 3.3 13.9 5.3L15.3 3.9C13.6 1.5 10.5 0 7 0Z" fill="rgba(255,255,255,0.85)"/>
+        <circle cx="7" cy="10" r="1.5" fill="white"/>
+      </svg>
+      <span>●●●</span>
+    </div>
+  </div>
+
+  <!-- APP CONTENT -->
+  <div class="app-content">
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast" id="toast">
+      <div class="toast-icon">🛡️</div>
+      <div class="toast-text">
+        <div class="toast-title" id="toast-title">Schutz aktiv</div>
+        <div class="toast-sub" id="toast-sub">Bolt wurde automatisch offline gestellt</div>
+      </div>
+    </div>
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="logo">
+        <div class="logo-icon">🛡️</div>
+        <div>
+          <div class="logo-text">DriverHub</div>
+          <div class="logo-sub">PLATTFORM-MANAGER</div>
+        </div>
+      </div>
+      <div class="settings-btn" onclick="showToast('Einstellungen', 'Kommt in Version 2.0')">⚙️</div>
+    </div>
+
+    <!-- SHIELD STATUS CARD -->
+    <div class="shield-card">
+      <div class="shield-icon">🛡️</div>
+      <div class="shield-info">
+        <div class="shield-title">Schutz aktiv</div>
+        <div class="shield-desc">Accessibility Service läuft im Hintergrund. Plattformen werden automatisch verwaltet.</div>
+      </div>
+      <div class="pulse-dot" id="pulse-dot"></div>
+    </div>
+
+    <!-- ACTIVE TRIP CARD -->
+    <div class="trip-card" id="trip-card">
+      <div class="trip-header">
+        <span class="trip-label">🚗 Fahrt aktiv</span>
+        <span class="trip-timer" id="trip-timer">00:00</span>
+      </div>
+      <div class="trip-route">
+        <div class="route-dots">
+          <div class="route-dot-start"></div>
+          <div class="route-line"></div>
+          <div class="route-dot-end"></div>
+        </div>
+        <div class="route-labels">
+          <div class="route-stop">
+            Alexanderplatz 1, Berlin
+            <div class="route-stop-sub">Abholpunkt</div>
+          </div>
+          <div class="route-stop">
+            Potsdamer Platz 5, Berlin
+            <div class="route-stop-sub">Ziel</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLATFORM CARDS -->
+    <div class="platforms-grid">
+      <!-- UBER CARD -->
+      <div class="platform-card online-uber" id="uber-card">
+        <div class="platform-toggle on-uber" id="uber-toggle" onclick="manualToggle('uber')">
+          <div class="toggle-knob"></div>
+        </div>
+        <div class="platform-logo uber">UBER</div>
+        <div class="platform-status-badge badge-online-uber" id="uber-badge">
+          <div class="badge-dot"></div>
+          <span id="uber-status-text">Online</span>
+        </div>
+        <div class="platform-stat">Heute: <span id="uber-trips">0 Fahrten</span></div>
+      </div>
+
+      <!-- BOLT CARD -->
+      <div class="platform-card online-bolt" id="bolt-card">
+        <div class="platform-toggle on-bolt" id="bolt-toggle" onclick="manualToggle('bolt')">
+          <div class="toggle-knob"></div>
+        </div>
+        <div class="platform-logo bolt">BOLT</div>
+        <div class="platform-status-badge badge-online-bolt" id="bolt-badge">
+          <div class="badge-dot"></div>
+          <span id="bolt-status-text">Online</span>
+        </div>
+        <div class="platform-stat">Heute: <span id="bolt-trips">0 Fahrten</span></div>
+      </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="quick-actions">
+      <button class="action-btn btn-all-online" onclick="allOnline()">
+        <span class="btn-icon">✅</span> Alle Online
+      </button>
+      <button class="action-btn btn-all-offline" onclick="allOffline()">
+        <span class="btn-icon">⏸</span> Alle Offline
+      </button>
+    </div>
+
+    <!-- ACTIVITY LOG -->
+    <div class="section-header">
+      <span class="section-title">Letzte Aktionen</span>
+      <span class="section-clear" onclick="clearLog()">Löschen</span>
+    </div>
+
+    <div class="log-container" id="log-container">
+      <div class="log-entry">
+        <div class="log-icon info">🛡️</div>
+        <div class="log-text">
+          <div class="log-message">DriverHub gestartet <span class="log-platform-tag tag-uber">SYSTEM</span></div>
+          <div class="log-time">09:41:03 — Accessibility Service aktiv</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Dashboard</div>
+    </div>
+    <div class="nav-item" onclick="showToast('Statistiken', 'Kommt in Version 2.0')">
+      <div class="nav-icon" style="color:var(--text-dim)">📊</div>
+      <div class="nav-label">Statistiken</div>
+    </div>
+    <div class="nav-item" onclick="showToast('Schicht', 'Schicht-Tracking kommt in V2.0')">
+      <div class="nav-icon" style="color:var(--text-dim)">⏱️</div>
+      <div class="nav-label">Schicht</div>
+    </div>
+    <div class="nav-item" onclick="showToast('Einstellungen', 'Vollständig in Version 2.0')">
+      <div class="nav-icon" style="color:var(--text-dim)">⚙️</div>
+      <div class="nav-label">Einstellungen</div>
+    </div>
+  </div>
+
+</div><!-- end phone-frame -->
+
+<!-- DEMO CONTROLS (below phone) -->
+<div class="demo-controls">
+  <div class="demo-controls-title">🎮 Demo-Szenarien simulieren</div>
+  <div class="demo-btns">
+    <button class="demo-btn" onclick="simulateUberTrip()">
+      <strong>🚗 Uber-Auftrag</strong>
+      Annahme bei Uber → Bolt wird offline gestellt
+    </button>
+    <button class="demo-btn" onclick="simulateBoltTrip()">
+      <strong>⚡ Bolt-Auftrag</strong>
+      Annahme bei Bolt → Uber wird offline gestellt
+    </button>
+    <button class="demo-btn" onclick="simulateTripEnd()">
+      <strong>🏁 Fahrt beenden</strong>
+      Fahrt abgeschlossen, Status zurücksetzen
+    </button>
+    <button class="demo-btn" onclick="allOnline()">
+      <strong>✅ Alle online</strong>
+      Beide Plattformen wieder aktivieren
+    </button>
+  </div>
+</div>
+
+</div><!-- end outer flex -->
+
+<script>
+  const state = {
+    uber: { online: true, trips: 0 },
+    bolt: { online: true, trips: 0 },
+    activeTrip: null,
+    tripSeconds: 0,
+    tripInterval: null,
+    toastTimeout: null,
+    logCount: 0
+  };
+
+  function now() {
+    const d = new Date();
+    return d.getHours().toString().padStart(2,'0') + ':' +
+           d.getMinutes().toString().padStart(2,'0') + ':' +
+           d.getSeconds().toString().padStart(2,'0');
+  }
+
+  function addLog(icon, iconClass, message, subtext, tagHtml) {
+    state.logCount++;
+    const container = document.getElementById('log-container');
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.innerHTML = `
+      <div class="log-icon ${iconClass}">${icon}</div>
+      <div class="log-text">
+        <div class="log-message">${message} ${tagHtml || ''}</div>
+        <div class="log-time">${now()} — ${subtext}</div>
+      </div>`;
+    container.insertBefore(entry, container.firstChild);
+    if (state.logCount > 8) {
+      container.removeChild(container.lastChild);
+    }
+  }
+
+  function showToast(title, sub) {
+    clearTimeout(state.toastTimeout);
+    document.getElementById('toast-title').textContent = title;
+    document.getElementById('toast-sub').textContent = sub;
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    state.toastTimeout = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function updatePlatformUI(platform, online) {
+    const card = document.getElementById(platform + '-card');
+    const toggle = document.getElementById(platform + '-toggle');
+    const badge = document.getElementById(platform + '-badge');
+    const statusText = document.getElementById(platform + '-status-text');
+
+    if (online) {
+      card.className = 'platform-card online-' + platform;
+      toggle.className = 'platform-toggle on-' + platform;
+      badge.className = 'platform-status-badge badge-online-' + platform;
+      statusText.textContent = 'Online';
+    } else {
+      card.className = 'platform-card offline-state';
+      toggle.className = 'platform-toggle';
+      badge.className = 'platform-status-badge badge-offline';
+      statusText.textContent = 'Offline';
+    }
+  }
+
+  function setOnline(platform, online, reason) {
+    state[platform].online = online;
+    updatePlatformUI(platform, online);
+  }
+
+  function simulateUberTrip() {
+    if (state.activeTrip) { showToast('Bereits aktiv', 'Bitte zuerst Fahrt beenden'); return; }
+
+    addLog('🚗', 'info', 'Uber: Auftrag erkannt', 'Fahrer hat Fahrt angenommen', '<span class="log-platform-tag tag-uber">UBER</span>');
+
+    setTimeout(() => {
+      setOnline('bolt', false);
+      addLog('⚡', 'warning', 'Bolt → Offline gestellt', 'Automatisch deaktiviert', '<span class="log-platform-tag tag-bolt">BOLT</span>');
+      addLog('✅', 'success', 'Schutz aktiv — Bolt offline', 'Keine weiteren Bolt-Aufträge möglich', '');
+      showToast('Bolt automatisch offline', 'Uber-Fahrt läuft — kein doppelter Auftrag');
+      startTrip('UBER');
+    }, 800);
+
+    state.uber.trips++;
+    document.getElementById('uber-trips').textContent = state.uber.trips + ' Fahrten';
+  }
+
+  function simulateBoltTrip() {
+    if (state.activeTrip) { showToast('Bereits aktiv', 'Bitte zuerst Fahrt beenden'); return; }
+
+    addLog('⚡', 'info', 'Bolt: Auftrag erkannt', 'Fahrer hat Fahrt angenommen', '<span class="log-platform-tag tag-bolt">BOLT</span>');
+
+    setTimeout(() => {
+      setOnline('uber', false);
+      addLog('🚗', 'warning', 'Uber → Offline gestellt', 'Automatisch deaktiviert', '<span class="log-platform-tag tag-uber">UBER</span>');
+      addLog('✅', 'success', 'Schutz aktiv — Uber offline', 'Keine weiteren Uber-Aufträge möglich', '');
+      showToast('Uber automatisch offline', 'Bolt-Fahrt läuft — kein doppelter Auftrag');
+      startTrip('BOLT');
+    }, 800);
+
+    state.bolt.trips++;
+    document.getElementById('bolt-trips').textContent = state.bolt.trips + ' Fahrten';
+  }
+
+  function startTrip(platform) {
+    state.activeTrip = platform;
+    state.tripSeconds = 0;
+    document.getElementById('trip-card').classList.add('visible');
+
+    clearInterval(state.tripInterval);
+    state.tripInterval = setInterval(() => {
+      state.tripSeconds++;
+      const m = Math.floor(state.tripSeconds / 60).toString().padStart(2,'0');
+      const s = (state.tripSeconds % 60).toString().padStart(2,'0');
+      document.getElementById('trip-timer').textContent = m + ':' + s;
+    }, 1000);
+  }
+
+  function simulateTripEnd() {
+    if (!state.activeTrip) { showToast('Keine aktive Fahrt', 'Starte zuerst eine Demo-Fahrt'); return; }
+
+    const platform = state.activeTrip;
+    clearInterval(state.tripInterval);
+    state.activeTrip = null;
+
+    document.getElementById('trip-card').classList.remove('visible');
+    document.getElementById('trip-timer').textContent = '00:00';
+
+    addLog('🏁', 'success', 'Fahrt beendet', 'Plattformen wieder verfügbar', '');
+
+    setTimeout(() => {
+      setOnline('uber', true);
+      setOnline('bolt', true);
+      addLog('✅', 'success', 'Beide Plattformen online', 'Bereit für neue Aufträge', '');
+      showToast('Fahrt beendet', 'Uber & Bolt sind wieder online');
+    }, 600);
+  }
+
+  function allOnline() {
+    if (state.activeTrip) { showToast('Fahrt aktiv', 'Fahrt zuerst beenden'); return; }
+    setOnline('uber', true);
+    setOnline('bolt', true);
+    addLog('✅', 'success', 'Alle Plattformen online', 'Manuell aktiviert', '');
+    showToast('Alle online', 'Uber & Bolt aktiv');
+  }
+
+  function allOffline() {
+    setOnline('uber', false);
+    setOnline('bolt', false);
+    addLog('⏸', 'warning', 'Alle Plattformen offline', 'Manuell deaktiviert', '');
+    showToast('Alle offline', 'Pause aktiv — keine Aufträge');
+  }
+
+  function manualToggle(platform) {
+    const newState = !state[platform].online;
+    setOnline(platform, newState);
+    const label = platform === 'uber' ? 'Uber' : 'Bolt';
+    const status = newState ? 'Online' : 'Offline';
+    addLog(newState ? '✅' : '⏸', newState ? 'success' : 'warning',
+      `${label} → ${status}`, 'Manuell umgeschaltet',
+      `<span class="log-platform-tag tag-${platform}">${platform.toUpperCase()}</span>`);
+  }
+
+  function clearLog() {
+    const container = document.getElementById('log-container');
+    container.innerHTML = `
+      <div class="log-entry">
+        <div class="log-icon info">🛡️</div>
+        <div class="log-text">
+          <div class="log-message">Log geleert <span class="log-platform-tag tag-uber">SYSTEM</span></div>
+          <div class="log-time">${now()} — Bereit</div>
+        </div>
+      </div>`;
+    state.logCount = 1;
+  }
+</script>
+</body>
+</html>
